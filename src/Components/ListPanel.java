@@ -8,6 +8,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 import javax.swing.JPanel;
+import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
 
 public class ListPanel extends JPanel {
 
@@ -20,6 +22,7 @@ public class ListPanel extends JPanel {
 	public ListPanel() {
 		setLayout(new WrapLayout(WrapLayout.CENTER, 10,30));
 		setBackground(new Color(169, 218, 167));
+		setBorder(new MatteBorder(1, 1, 1, 0, Color.BLACK));
 	}
 	@Override
 	protected void paintComponent(Graphics g) {
