@@ -9,10 +9,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import Helpers.ArrayCheck;
-import Helpers.Data;
 import Helpers.ImageAI;
 
 import javax.swing.DefaultListModel;
@@ -30,6 +28,7 @@ import javax.swing.JLabel;
 
 import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
+import java.util.Random;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 
@@ -37,18 +36,23 @@ public class ListForm extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	public DefaultListModel<String> listModel = new DefaultListModel<String>();
-
+	private JProgressBar bar = new JProgressBar(0,100);
+	JPanel ListPanel = null;
 	/**
 	 * Create the panel.
 	 */
 	public ListForm() {
 		setLayout(null);
 		
-		JPanel ListPanel = new JPanel();
+		ListPanel = new JPanel();
 		ListPanel.setBackground(new Color(255, 255, 255));
 		ListPanel.setBounds(0, 0, 600, 586);
 		add(ListPanel);
 		ListPanel.setLayout(null);
+		
+		bar.setStringPainted(true);
+		bar.setForeground(Color.GREEN);
+		bar.setBounds(ListPanel.getWidth()/4, ListPanel.getHeight()/2, 300,30);
 		
 		JPanel designPanel1 = new Header();
 		designPanel1.setBounds(0, 0, 600, 110);
@@ -90,12 +94,13 @@ public class ListForm extends JPanel {
 				boolean isImage = ImageAI.ImageFileChecker(jf.getSelectedFile().getName());
 				if(i == JFileChooser.APPROVE_OPTION && isImage) {
 						
-						Thread.startVirtualThread((new Runnable() {
-								
+						Thread imageThread = new Thread(new Runnable() {
 								@Override
 								public void run() {
 									try {
+
 										int imageId = ImageAI.IdentifyImage(ImageAI.compressImage(jf.getSelectedFile()) , ListPanel);
+										
 										JSONArray arr = ImageAI.retrieveIngredients(ImageAI.client, ImageAI.token, imageId, ListPanel);
 										
 										arr.forEach(el ->{
@@ -105,13 +110,28 @@ public class ListForm extends JPanel {
 											}
 										});
 									} catch (IOException e) {
-										
+										e.printStackTrace();
 									}
 										
 									
 								}
-							}));
-					
+							});
+						imageThread.start();
+						Thread.startVirtualThread(new Runnable() {
+							
+							@Override
+							public void run() {
+							
+								while(imageThread.isAlive()) {
+									try {
+										Thread.sleep(100);
+										loadBar();
+									} catch (InterruptedException e) {
+									}
+								}
+								
+							}
+						});
 				}
 			}
 		});
@@ -197,6 +217,28 @@ public class ListForm extends JPanel {
 			 str = "apples,+flour,+sugar";
 		 }
 		 return str;
+	}
+
+
+		private void loadBar() {
+			try {
+
+				bar.setValue(1);
+				ListPanel.add(bar);
+				listPanelUpdate();
+				while(bar.getValue() < 100) {
+					Thread.sleep(100);
+					bar.setValue(bar.getValue()+ new Random().nextInt(3,15));
+				}
+				ListPanel.remove(bar);
+				listPanelUpdate();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	private void listPanelUpdate() {
+		ListPanel.repaint();
+		ListPanel.revalidate();
 	}
 
 }

@@ -9,6 +9,10 @@ import javax.imageio.ImageIO;
 import javax.swing.JLabel;
 
 import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -16,7 +20,9 @@ import java.awt.Dimension;
 import javax.swing.JScrollPane;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
+import Classes.RecipeTitle;
 import Helpers.Data;
 
 public class RecipesForm extends JPanel {
@@ -29,8 +35,8 @@ public class RecipesForm extends JPanel {
 	 * Create the panel.
 	 */
 	public RecipesForm() {
-		setBackground(Color.WHITE);
 		setPreferredSize(new Dimension(606, 720));
+		setBackground(Color.decode("#98D7C2"));
 		setLayout(null);
 		JPanel designPanel1 = new Header();
 		designPanel1.setBounds(0, 0, 606, 87);
@@ -43,14 +49,13 @@ public class RecipesForm extends JPanel {
 		designPanel1.add(lblNewLabel);
 		
 		JScrollPane recipeScrollPanel = new JScrollPane();
+		recipeScrollPanel.setBackground(new Color(169, 218, 167));
 		recipeScrollPanel.setBorder(null);
 		recipeScrollPanel.setBounds(25, 130, 573, 487);
 		recipeScrollPanel.getVerticalScrollBar().setUI(new ModernScrollBarUI());
 		add(recipeScrollPanel);
 		
-		listPanel = new JPanel();
-		listPanel.setLayout(new WrapLayout(WrapLayout.CENTER, 10,30));
-		listPanel.setBackground(Color.WHITE);
+		listPanel = new ListPanel();
 		recipeScrollPanel.setViewportView(listPanel);
 		
 	}
@@ -63,6 +68,7 @@ public class RecipesForm extends JPanel {
 				listPanel.removeAll();
 				JProgressBar bar = new JProgressBar(0,100);	
 				bar.setStringPainted(true);
+				bar.setValue(0);
 				bar.setBackground(Color.WHITE);
 				bar.setSize(200,20);
 				bar.setLocation(200, 100);
@@ -83,26 +89,34 @@ public class RecipesForm extends JPanel {
 				bar.setValue(60);
 				bar.repaint();
 				for(int i = 0; i< arrData.length();i++) {
-					String image=  arrData.getJSONObject(i).getString("image");
-					
+					JSONObject obj =arrData.getJSONObject(i);
+					String image = obj.getString("image");
+					String recipeTitle = obj.getString("title");
 					if(image != null) {
 						try {
-							listPanel.add(new CRecipe(ImageIO.read(URI.create(image).toURL())));
-							listPanel.repaint();
-							listPanel.revalidate();
-						} catch (MalformedURLException e) {
-							listPanel.add(new CRecipe(null));
-							listPanel.repaint();
-							listPanel.revalidate();
+							CRecipe rec = new CRecipe(ImageIO.read(URI.create(image).toURL()));
+							RecipeTitle recTitle = rec.getRecipeTitle();
+							recTitle.setRecipeTitle(recipeTitle);
+							if(recTitle.getRecipeTitle().length() <= 8) {
+								recTitle.setxTitle(70);
+							}
+							listPanel.add(rec);
+							listUpdate();
+						} catch(MalformedURLException e) {
+							CRecipe rec = new CRecipe(null);
+							rec.getRecipeTitle().setxTitle(80);
+							listPanel.add(rec);
+							listUpdate();
 						} catch (IOException e) {
-							listPanel.add(new CRecipe(null));
-							listPanel.revalidate();
-							listPanel.repaint();
+							CRecipe rec = new CRecipe(null);
+							rec.getRecipeTitle().setxTitle(80);
+							listPanel.add(rec);
+							listUpdate();
 						}
 						
 					}else {
 						listPanel.add(new CRecipe(null));
-						listPanel.repaint();
+						listUpdate();
 					}
 					bar.setValue(bar.getValue()+2);
 				}
@@ -113,4 +127,24 @@ public class RecipesForm extends JPanel {
 			}
 		});
 	}
+	public void listUpdate() {
+		listPanel.repaint();
+		listPanel.revalidate();
+	}
+	public JSONArray getArrData() {
+		return arrData;
+	}
+	public void setArrData(JSONArray arrData) {
+		this.arrData = arrData;
+	}
+	public JPanel getListPanel() {
+		return listPanel;
+	}
+	public void setListPanel(JPanel listPanel) {
+		this.listPanel = listPanel;
+	}
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
 }
